@@ -1,70 +1,54 @@
-# Getting Started with Create React App
+## 스트링 리스폰스 방식의 서버사이드 렌더링 with CRA
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+### 서버사이드 렌더링 왜 필요한가?
 
-## Available Scripts
+- 검색엔진 크롤러 봇은 SPA서 잘 작동하지 않음
+- 검색엔진 최적화를 위해
+- 초기 렌더링 성능을 개선(자바스크립트 파일 다운로드가 늦어지더라고 html 유아이 존재하여 사용자 경험 향상)
 
-In the project directory, you can run:
+### 서버사이드 렌더링시의 고려사항
 
-### `yarn start`
+- 서버 리소스 사용으로 인한 과부하 발생 우려
+- 캐싱과 로드밸런싱 통한 성능 최적화 필요
+- 데이터 미리 불러오기, 코드 스플리팅 등 고려 필요
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+### 서버사이드 렌더링
 
-The page will reload if you make edits.\
-You will also see any lint errors in the console.
+1. 준비사항
 
-### `yarn test`
+```
+- 서버 실행 위한 엔트리 파일 생성(src/index.server.js)
+- 빌드시의 웹팩 환경 설정 변경(config/paths.js)
+- 서버용 웹팩 환경 설정 파일 작성 (config/webpack.config.server.js)
+- 빌드 스크립트 작성 (scripts/build.server.js)
+```
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+2. 서버 작성(src/index.server.js)
 
-### `yarn build`
+```
+- 웹서버 구동(본 프로젝트에서는 express 사용)
+- 동작 방식은 react-dom의 ReactDOMServer 객체를 사용하여 렌더링 결과물을 스트링 문자열로 리스폰스 하는 방식
+- react-router-dom의 StaticRouter를 사용한다
+- css 등의 정적 빌드 결과물을 express의 기능을 이용하여 정적파일로써 제공한다
+```
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+3. 데이터 로드
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+```
+- 컴포넌트가 렌더링 되기 전에 데이터를 요청하여야 한다
+- PreloadContext(src/lib/PreloadContext.js)라는 컨텍스트를 만들어 데이터 로드가 끝난 후 컴포넌트가 로드 되도록 처리 (클래스형 컴포넌트에서는 컨텍스트로, 함수형 컴포넌트에서는 훅으로 사용가능)
+- 데이터 로드 시에 PromoseAll을 사용하여 모든 비동기 작업을이 처리 완료 된 시점에 컴포넌트를 로드한다
+- 서버에서는 renderToStaticMarkup을 활용하여 렌더링 후 프로미스 작업들을 기다려 완료한 뒤 renderToString을 통해 리스폰스 하는 작업이 이루어진다
+- 서버사이드 렌더링 시 스토어는 브라우저에서 재사용 되지 못한다. 따라서 문자열로 변환한 뒤 스크립트로 주입해주는 작업이 필요
+- saga를 사용할 시에는 saga 미들웨어를 구동(run)하면서 프로미스로써 동작하도록 하여야 하며 END 액션을 따로 발생시켜 액션이 끝난 후 액션 모니터링을 멈추어주어야 한다
+```
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+4. 코드 스플리팅
 
-### `yarn eject`
-
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
-
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
-
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
-
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
-
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
-
-### Code Splitting
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
-
-### Analyzing the Bundle Size
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
-
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `yarn build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+```
+- Loadable Components 사용
+- 바벨 플러그인, 웹팩 플러그인 추가 필요
+- Lodable Components를 통해 필요한 청크파일 목록을 추출하고 ChunkExtractor와 ChunkExtractorManager를 통해 필요 파일만 임포트 한다.
+- 리액트 단에서는 lodableReady를 사용하여 모든 스크립트가 로딩된 후에 렌더링 하도록 한다
+- hydrate를 사용하여 서버사이드 렌더링 결과물 있을 시에는 새로 렌더링 하지 않고 기존 존재하는 UI에 이벤트만 연동하여 어플리케이션 초기 구곧ㅇ시의 리소스를 최소화 한다.
+```
