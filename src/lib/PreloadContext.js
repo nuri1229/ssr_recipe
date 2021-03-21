@@ -7,7 +7,6 @@ export default PreloadContext;
 
 //파라미터 resolve는 함수타입
 export const Preloader = ({ resolve }) => {
-  console.log("preloader");
   const preloadContext = useContext(PreloadContext);
 
   if (!preloadContext) return null;
@@ -15,4 +14,11 @@ export const Preloader = ({ resolve }) => {
 
   preloadContext.promises.push(Promise.resolve(resolve()));
   return null;
+};
+
+export const usePreloader = (resolve) => {
+  const preloadContext = useContext(PreloadContext);
+  if (!preloadContext) return null;
+  if (preloadContext.done) return null;
+  preloadContext.promises.push(Promise.resolve(resolve()));
 };
