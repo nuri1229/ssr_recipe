@@ -20,7 +20,7 @@ const chunks = Object.keys(manifest.files)
   .map((key) => `<script src="${manifest.files[key]}"></script>`)
   .join("");
 
-function createPage(root) {
+function createPage(root, stateScript) {
   return `
   <!DOCTYPE html>
   <html lang="en">
@@ -43,6 +43,7 @@ function createPage(root) {
       <div id="root">
         ${root}
       </div>
+      ${stateScript}
       <script src="${manifest.files["runtime-main.js"]}"></script>
       ${chunks}
       <script src="${manifest.files["main.js"]}"></script>
@@ -80,7 +81,10 @@ const serverRender = async (req, res, next) => {
 
   preloadContext.done = true;
   const root = ReactDOMServer.renderToString(jsx);
-  res.send(createPage(root));
+  const stateString = JSON.stringify(store.getState()).replace(/</g, "//u003c");
+  const stateScript = `<script>__PRELOAD_STATE__=${stateString}</script>`;
+
+  res.send(createPage(root, stateScript));
 };
 
 const serve = express.static(path.resolve("./build"), {
